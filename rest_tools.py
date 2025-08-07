@@ -1,25 +1,5 @@
-## wordgpt
-大模型工具调用
-word自动化
+import win32com.client
 
-### 问题1：
-大模型要能随时浏览到word的内容，要将python-docx库读取到的word转成一种大模型可以理解的格式
-
-同时有时候需要将大模型输出的json格式内容转成word
-
-python-docx库时一个纯python的库，
-win32com.client是通过操作word生成文档，功能相比python-docx更为强大和灵活
-
-
-要实现一个基于工具调用的大模型程序，通过 `win32com.client` 来生成 Word 文档或修改已有文档的格式，您需要封装一些常用的 API 以便大模型可以直接调用。以下是一个详细的包装实现，包括文档生成、段落、表格格式设置以及对文档的修改操作。
-
-### 1. **文档管理 API**：
-
-文档管理类封装了打开、保存、关闭 Word 文档的功能。
-
-#### 文档管理 API：
-
-```python
 # 启动 Word 应用程序
 def start_word():
     """ 启动 Word 应用程序并返回应用实例和文档对象 """
@@ -57,15 +37,7 @@ def close_document(doc):
 def quit_word(word):
     """ 退出 Word 应用程序 """
     word.Quit()
-```
 
-### 2. **段落操作 API**：
-
-段落是 Word 文档中的基本单位，您可以创建段落、设置段落格式（字体、字号、加粗、斜体、对齐方式等）。
-
-#### 段落操作 API：
-
-```python
 # 添加段落并设置格式
 def add_paragraph(text, style="正文", font_name="宋体", font_size=12, bold=False, italic=False, alignment=1):
     """ 添加段落并设置格式 """
@@ -89,15 +61,6 @@ def set_title(doc, title_text, style="标题 1", font_name="宋体", font_size=1
     title.Range.Font.Size = font_size
     title.Range.ParagraphFormat.Alignment = 1  # 居中对齐
 
-```
-
-### 3. **文档格式修改 API**：
-
-文档格式修改是对现有文档进行修改，包括段落、表格、标题等的格式调整。
-
-#### 文档格式修改 API：
-
-```python
 # 设置段落对齐方式
 def set_paragraph_alignment(para, alignment):
     """ 设置段落对齐方式 """
@@ -126,15 +89,7 @@ def modify_paragraph_style(doc, paragraph_index, style="正文", font_name="宋�
     para.Style = style
     para.Range.Font.Name = font_name
     para.Range.Font.Size = font_size
-```
 
-### 5. **选择器 API**：
-
-选择器用于从文档中选择元素，如段落、表格等，您可以根据条件选择需要操作的元素。
-
-#### 选择器 API：
-
-```python
 # 根据条件选择段落
 def select_paragraphs(doc, filter_fn=None):
     """ 根据条件选择段落 """
@@ -143,34 +98,8 @@ def select_paragraphs(doc, filter_fn=None):
         if filter_fn and filter_fn(para):
             paragraphs.append(para)
     return paragraphs
-```
 
-### 6. **执行器 API**：
-
-执行器用于实际对选择的元素进行修改，例如修改段落文本、表格内容等。
-
-#### 执行器 API：
-
-```python
-# 修改段落文本
 def modify_paragraph(doc, paragraph_index, new_text):
     """ 修改段落文本 """
     para = doc.Paragraphs(paragraph_index)
     para.Range.Text = new_text
-```
-
-### 7. **验证器 API**：
-
-验证器用于验证文档是否符合指定的要求，例如检查段落格式、字体大小等。
-
-
-
-### 总结：
-
-1. **文档管理 API**：用于打开、创建、保存和关闭 Word 文档。
-2. **段落操作 API**：用于操作段落的文本、样式、字体、对齐方式等。
-3. **表格操作 API**：用于操作表格的内容、样式、字体、单元格内容等。
-4. **文档格式修改 API**：用于修改文档的标题、段落和表格的格式。
-5. **选择器、执行器和验证器**：用于选择要操作的文档元素，执行相应的修改操作，并验证操作是否成功。
-
-通过这些 API，您可以灵活地生成、修改和验证 Word 文档。
