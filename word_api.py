@@ -1,47 +1,49 @@
 import win32com.client
+from word_to_json import word2json
 
-# 启动 Word 应用程序
+word=None
+doc=None
+
+#打开word程序
 def start_word():
-    """ 启动 Word 应用程序并返回应用实例和文档对象 """
-    global doc
+    global word
     word = win32com.client.Dispatch("Word.Application")
     word.Visible = False  # 后台运行
-    doc = word.Documents.Add()  # 创建一个新文档
-    return word
 
 # 打开现有文档
-def open_document(word, file_path):
+def open_document(file_path):
     """ 打开一个现有的 Word 文档 """
+    global doc
     doc = word.Documents.Open(file_path)
-    return doc
 
 # 创建新文档
-def create_document(word):
+def create_document():
     """ 创建一个新的空文档 """
+    global doc
     doc = word.Documents.Add()
-    return doc
 
 # 保存文档
-def save_document(doc, file_path):
+def save_document(file_path):
     """ 保存当前文档到指定路径 """
+    global doc
     if doc:
         doc.SaveAs(file_path)
 
 # 关闭文档
-def close_document(doc):
+def close_document():
     """ 关闭当前文档 """
+    global doc
     if doc:
         doc.Close()
 
 # 退出 Word 应用程序
-def quit_word(word):
+def quit_word():
     """ 退出 Word 应用程序 """
     word.Quit()
 
 # 添加段落并设置格式
 def add_paragraph(text, style="正文", font_name="宋体", font_size=12, bold=False, italic=False, alignment=1):
     """ 添加段落并设置格式 """
-    global doc
     para = doc.Content.Paragraphs.Add()  # 添加段落
     para.Range.Text = text  # 设置段落内容
     para.Style = style  # 设置段落样式
@@ -52,7 +54,7 @@ def add_paragraph(text, style="正文", font_name="宋体", font_size=12, bold=F
     para.Alignment = alignment  # 设置对齐方式
 
 # 添加文档标题
-def set_title(doc, title_text, style="标题 1", font_name="宋体", font_size=18):
+def set_title(title_text, style="标题 1", font_name="宋体", font_size=18):
     """ 设置文档标题 """
     title = doc.Content.Paragraphs.Add()
     title.Range.Text = title_text
@@ -62,44 +64,43 @@ def set_title(doc, title_text, style="标题 1", font_name="宋体", font_size=1
     title.Range.ParagraphFormat.Alignment = 1  # 居中对齐
 
 # 设置段落对齐方式
-def set_paragraph_alignment(para, alignment):
+def set_paragraph_alignment(paragraph_index, alignment):
     """ 设置段落对齐方式 """
+    para = doc.Paragraphs(paragraph_index)
     para.Alignment = alignment  # 0-左对齐，1-居中对齐，2-右对齐
 
 # 设置段落字体和字号
-def set_paragraph_font(para, font_name, font_size):
+def set_paragraph_font(paragraph_index, font_name, font_size):
     """ 设置段落字体和字号 """
+    para = doc.Paragraphs(paragraph_index)
     para.Range.Font.Name = font_name
     para.Range.Font.Size = font_size
 
 # 设置段落加粗
-def set_paragraph_bold(para, bold):
+def set_paragraph_bold(paragraph_index, bold):
     """ 设置段落加粗 """
+    para = doc.Paragraphs(paragraph_index)
     para.Range.Font.Bold = bold
 
 # 设置段落斜体
-def set_paragraph_italic(para, italic):
+def set_paragraph_italic(paragraph_index, italic):
     """ 设置段落斜体 """
+    para = doc.Paragraphs(paragraph_index)
     para.Range.Font.Italic = italic
 
 # 修改段落样式
-def modify_paragraph_style(doc, paragraph_index, style="正文", font_name="宋体", font_size=12):
+def modify_paragraph_style(paragraph_index, style="正文", font_name="宋体", font_size=12):
     """ 修改段落样式 """
     para = doc.Paragraphs(paragraph_index)
     para.Style = style
     para.Range.Font.Name = font_name
     para.Range.Font.Size = font_size
 
-# 根据条件选择段落
-def select_paragraphs(doc, filter_fn=None):
-    """ 根据条件选择段落 """
-    paragraphs = []
-    for para in doc.Paragraphs:
-        if filter_fn and filter_fn(para):
-            paragraphs.append(para)
-    return paragraphs
-
-def modify_paragraph(doc, paragraph_index, new_text):
-    """ 修改段落文本 """
+# 修改段落文本
+def modify_paragraph(paragraph_index, new_text):
     para = doc.Paragraphs(paragraph_index)
     para.Range.Text = new_text
+
+# 获取word json内容
+def get_word_content():
+    return word2json(word,doc)
