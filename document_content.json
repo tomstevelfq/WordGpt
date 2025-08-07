@@ -1,0 +1,57 @@
+[
+    {
+        "type": "paragraph",
+        "text": "基于知识图谱和动态任务规划框架的电网故障应对机制",
+        "font": "宋体",
+        "size": 18.0,
+        "bold": -1,
+        "italic": 0,
+        "underline": 0,
+        "alignment": 1,
+        "line_spacing": 28.80000114440918
+    },
+    {
+        "type": "paragraph",
+        "text": "步骤 1：数据准备与API设计",
+        "font": "宋体",
+        "size": 14.0,
+        "bold": -1,
+        "italic": 0,
+        "underline": 0,
+        "alignment": 1,
+        "line_spacing": 20.649999618530273
+    },
+    {
+        "type": "paragraph",
+        "text": "第一步：获取电网故障预测数据集。",
+        "font": "宋体",
+        "size": 12.0,
+        "bold": -1,
+        "italic": 0,
+        "underline": 0,
+        "alignment": 3,
+        "line_spacing": 12.0
+    },
+    {
+        "type": "paragraph",
+        "text": "收集包含电网故障与故障预案的多维度数据集。数据集可能包括电网设备状态、负荷、温度、湿度、电压、电流，故障应对措施等信息，以及历史故障记录（故障发生时间、地点、类型等）。",
+        "font": "微软雅黑",
+        "size": 12.0,
+        "bold": 0,
+        "italic": -1,
+        "underline": 0,
+        "alignment": 3,
+        "line_spacing": 12.0
+    },
+    {
+        "type": "paragraph",
+        "text": "这是加粗的段落。",
+        "font": "微软雅黑",
+        "size": 12.0,
+        "bold": -1,
+        "italic": -1,
+        "underline": 0,
+        "alignment": 3,
+        "line_spacing": 12.0
+    }
+]
