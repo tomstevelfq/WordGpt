@@ -3,23 +3,25 @@
         "type": "paragraph",
         "text": "基于知识图谱和动态任务规划框架的电网故障应对机制",
         "font": "宋体",
-        "size": 18.0,
+        "size": 22.0,
         "bold": -1,
         "italic": 0,
         "underline": 0,
         "alignment": 1,
-        "line_spacing": 28.80000114440918
+        "line_spacing": 28.80000114440918,
+        "is_title": true
     },
     {
         "type": "paragraph",
         "text": "步骤 1：数据准备与API设计",
-        "font": "宋体",
-        "size": 14.0,
+        "font": "",
+        "size": 16.0,
         "bold": -1,
         "italic": 0,
         "underline": 0,
         "alignment": 1,
-        "line_spacing": 20.649999618530273
+        "line_spacing": 20.649999618530273,
+        "is_title": true
     },
     {
         "type": "paragraph",
@@ -30,7 +32,8 @@
         "italic": 0,
         "underline": 0,
         "alignment": 3,
-        "line_spacing": 12.0
+        "line_spacing": 12.0,
+        "is_title": false
     },
     {
         "type": "paragraph",
@@ -41,7 +44,8 @@
         "italic": -1,
         "underline": 0,
         "alignment": 3,
-        "line_spacing": 12.0
+        "line_spacing": 12.0,
+        "is_title": false
     },
     {
         "type": "paragraph",
@@ -52,6 +56,7 @@
         "italic": -1,
         "underline": 0,
         "alignment": 3,
-        "line_spacing": 12.0
+        "line_spacing": 12.0,
+        "is_title": false
     }
 ]

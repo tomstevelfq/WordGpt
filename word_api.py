@@ -83,10 +83,11 @@ def set_paragraph_bold(paragraph_index, bold):
     para.Range.Font.Bold = bold
 
 # 设置段落斜体
-def set_paragraph_italic(paragraph_index, italic):
+def set_paragraph_italic(paragraph_index_list, italic):
     """ 设置段落斜体 """
-    para = doc.Paragraphs(paragraph_index)
-    para.Range.Font.Italic = italic
+    for paragraph_index in paragraph_index_list:
+        para = doc.Paragraphs(paragraph_index)
+        para.Range.Font.Italic = italic
 
 # 修改段落样式
 def modify_paragraph_style(paragraph_index, style="正文", font_name="宋体", font_size=12):
