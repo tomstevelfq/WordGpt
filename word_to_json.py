@@ -2,7 +2,7 @@ import re
 import win32com.client
 import json
 
-def word2json(word, doc):
+def word2json(word,doc):
     # 获取文档内容和格式
     content = []
 
@@ -16,8 +16,7 @@ def word2json(word, doc):
         para_underline = para.Range.Font.Underline  # 获取字体是否下划线
         para_alignment = para.Alignment  # 获取段落对齐方式
         para_line_spacing = para.Format.LineSpacing  # 获取行距
-        para_style = para.Style.Name  # 获取段落样式
-
+        para_style = para.Style.NameLocal  # 获取段落样式
         # 判断段落是否为标题
         is_title = para_style.startswith('标题')  # 如果段落样式以 '标题' 开头，认为是标题
 
@@ -33,8 +32,8 @@ def word2json(word, doc):
                 'underline': para_underline,
                 'alignment': para_alignment,
                 'line_spacing': para_line_spacing,
-                'is_title': is_title  # 标记是否为标题
+                'is_title':is_title
             })
 
-    # 返回 JSON 字符串
+    # 返回 JSON 字符串，而不是保存到文件
     return json.dumps(content, ensure_ascii=False, indent=4)

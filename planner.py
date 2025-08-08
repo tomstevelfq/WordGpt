@@ -204,11 +204,11 @@ tools = [
     Tool(
         name="set_paragraph_alignment",
         func=set_paragraph_alignment,
-        description="""设置多个段落的对齐方式。
+        description="""设置段落对齐方式。
         输入：
-            - paragraph_index_list (list): 需要设置对齐方式的段落索引列表。
+            - paragraph_index (int): 需要设置对齐方式的段落索引。
             - alignment (int): 对齐方式（0-左对齐，1-居中，2-右对齐）。
-        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 2, 3], "alignment": 1}}。
+        参数格式：JSON 字符串，示例：{{"paragraph_index": 1, "alignment": 1}}。
         返回：无返回值。"""
     ),
     Tool(
@@ -225,23 +225,35 @@ tools = [
     Tool(
         name="set_paragraph_bold",
         func=set_paragraph_bold,
-        description="""设置多个段落的加粗。
+        description="""设置段落加粗。
         输入：
-            - paragraph_index_list (list): 需要设置加粗的段落索引列表。
+            - paragraph_index (int): 需要设置加粗的段落索引。
             - bold (bool): 是否加粗（True/False）。
-        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 3], "bold": true}}。
+        参数格式：JSON 字符串，示例：{{"paragraph_index": 1, "bold": true}}。
         返回：无返回值。"""
     ),
     Tool(
         name="set_paragraph_italic",
         func=set_paragraph_italic,
-        description="""设置多个段落的斜体。
+        description="""设置段落斜体。
         输入：
             - paragraph_index_list (list): 需要设置斜体的段落索引列表。
             - italic (bool): 是否斜体（True/False）。
         参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 3, 5], "italic": true}}。
         返回：无返回值。"""
     ),
+    # Tool(
+    #     name="modify_paragraph_style",
+    #     func=modify_paragraph_style,
+    #     description="""修改段落样式。
+    #     输入：
+    #         - paragraph_index (int): 需要修改样式的段落索引。
+    #         - style (str, optional): 新的段落样式，默认为 "正文"。
+    #         - font_name (str, optional): 字体名称，默认为 "宋体"。
+    #         - font_size (int, optional): 字号，默认为 12。
+    #     参数格式：JSON 字符串，示例：{{"paragraph_index": 1, "style": "正文", "font_name": "宋体", "font_size": 12}}。
+    #     返回：无返回值。"""
+    # ),
     Tool(
         name="modify_paragraph_style",
         func=modify_paragraph_style,
@@ -296,27 +308,8 @@ react_prompt="""
 15. 获取 Word 文档内容：`get_word_content()`
 
 示例：
-任务指令：为用户创建一个名为“项目计划”的文档，并在文档中添加标题“项目概述”，然后保存为 `project_plan.docx`。
 
-Thought: 我需要逐步执行任务：打开word程序，创建文档、设置标题和保存。
-Action: create_document()
-Action Input: success
-Observation: 成功创建了一个新的文档。
-
-Thought: 文档已创建，现在我需要设置文档标题。
-Action: set_title()
-Action Input: "项目概述"
-Observation: 文档标题已设置为“项目概述”，字体为宋体，字号为 18。
-
-Thought: 标题已设置，现在我需要保存文档。
-Action: save_document()
-Action Input: project_plan.docx save success
-Observation: 文档已保存为 `project_plan.docx`。
-
-Final Answer: 我已成功创建一个名为“项目计划”的文档，标题为“项目概述”，并将其保存为 `project_plan.docx`。
-
----
-
+示例0：修改标题样式
 任务指令：修改已有文档，将文档中的所有标题更改为斜体。
 
 Thought: 我需要逐步执行任务：打开文档、获取内容、修改标题样式和保存文档。
@@ -342,6 +335,183 @@ Observation: 文档已保存为 existing_document_updated.docx。
 Final Answer: 我已成功修改 existing_document.docx 中的所有标题，将它们设置为斜体，并保存为 existing_document_updated.docx。
 
 ---
+
+示例 1：为文档添加标题并保存
+任务指令：为已有文档添加标题并保存。
+
+Thought: 我需要逐步执行任务：打开文档、设置标题、保存文档。
+
+Action: open_document()
+
+Action Input: "existing_document.docx"
+
+Observation: 成功打开 existing_document.docx 文档。
+
+Thought: 文档已打开，现在我需要设置标题。
+
+Action: set_title()
+
+Action Input: {"title_text": "项目概述", "style": "标题 1", "font_name": "宋体", "font_size": 18}
+
+Observation: 标题已成功设置为“项目概述”，样式为“标题 1”。
+
+Thought: 标题已设置，现在我需要保存修改后的文档。
+
+Action: save_document()
+
+Action Input: "existing_document_with_title.docx"
+
+Observation: 文档已保存为 existing_document_with_title.docx。
+
+Final Answer: 我已成功为 existing_document.docx 添加了标题“项目概述”，并将其保存为 existing_document_with_title.docx。
+
+示例 2：修改文档中的某些段落字体和字号
+任务指令：修改文档中的所有正文段落的字体为“Arial”，字号为 14。
+
+Thought: 我需要逐步执行任务：打开文档、获取内容、修改段落样式和保存文档。
+
+Action: open_document()
+
+Action Input: "existing_document.docx"
+
+Observation: 成功打开 existing_document.docx 文档。
+
+Thought: 文档已打开，现在我需要获取文档内容。
+
+Action: get_word_content()
+
+Action Input: 无
+
+Observation: 成功获取文档内容的 JSON 格式。
+
+Thought: 我获取到文档内容，现在我需要修改所有正文段落的字体和字号。
+
+Action: modify_paragraph_style()
+
+Action Input: {"paragraph_index_list": [2, 4, 6], "font_name": "Arial", "font_size": 14}
+
+Observation: 正文段落（索引为 [2, 4, 6]）已成功设置为 Arial 字体，字号为 14。
+
+Thought: 所有正文段落已修改，现在我需要保存修改后的文档。
+
+Action: save_document()
+
+Action Input: "existing_document_modified.docx"
+
+Observation: 文档已保存为 existing_document_modified.docx。
+
+Final Answer: 我已成功修改 existing_document.docx 中的所有正文段落的字体为“Arial”，字号为 14，并保存为 existing_document_modified.docx。
+
+示例 3：删除文档中的所有空段落
+任务指令：删除已有文档中的所有空段落。
+
+Thought: 我需要逐步执行任务：打开文档、获取内容、删除空段落和保存文档。
+
+Action: open_document()
+
+Action Input: "existing_document.docx"
+
+Observation: 成功打开 existing_document.docx 文档。
+
+Thought: 文档已打开，现在我需要获取文档内容。
+
+Action: get_word_content()
+
+Action Input: 无
+
+Observation: 成功获取文档内容的 JSON 格式。
+
+Thought: 我获取到文档内容，现在我需要查找并删除空段落。
+
+Action: modify_paragraph()
+
+Action Input: {"paragraph_index_list": [5, 7, 9], "new_text": ""}
+
+Observation: 空段落（索引为 [5, 7, 9]）已成功删除。
+
+Thought: 空段落已删除，现在我需要保存修改后的文档。
+
+Action: save_document()
+
+Action Input: "existing_document_no_empty_paragraphs.docx"
+
+Observation: 文档已保存为 existing_document_no_empty_paragraphs.docx。
+
+Final Answer: 我已成功删除 existing_document.docx 中的所有空段落，并保存为 existing_document_no_empty_paragraphs.docx。
+
+示例 4：将文档中的所有文本设置为加粗
+任务指令：将文档中的所有段落文本设置为加粗。
+
+Thought: 我需要逐步执行任务：打开文档、获取内容、设置加粗并保存文档。
+
+Action: open_document()
+
+Action Input: "existing_document.docx"
+
+Observation: 成功打开 existing_document.docx 文档。
+
+Thought: 文档已打开，现在我需要获取文档内容。
+
+Action: get_word_content()
+
+Action Input: 无
+
+Observation: 成功获取文档内容的 JSON 格式。
+
+Thought: 我获取到文档内容，现在我需要设置所有段落文本为加粗。
+
+Action: set_paragraph_bold()
+
+Action Input: {"paragraph_index_list": [1, 2, 3, 4], "bold": true}
+
+Observation: 所有段落（索引为 [1, 2, 3, 4]）已成功设置为加粗。
+
+Thought: 所有段落文本已加粗，现在我需要保存修改后的文档。
+
+Action: save_document()
+
+Action Input: "existing_document_bold.docx"
+
+Observation: 文档已保存为 existing_document_bold.docx。
+
+Final Answer: 我已成功将 existing_document.docx 中的所有段落文本设置为加粗，并保存为 existing_document_bold.docx。
+
+示例 5：修改文档标题的字体和大小
+任务指令：将文档中所有标题的字体改为“Times New Roman”，字号改为 16。
+
+Thought: 我需要逐步执行任务：打开文档、获取内容、修改标题样式并保存文档。
+
+Action: open_document()
+
+Action Input: "existing_document.docx"
+
+Observation: 成功打开 existing_document.docx 文档。
+
+Thought: 文档已打开，现在我需要获取文档内容。
+
+Action: get_word_content()
+
+Action Input: 无
+
+Observation: 成功获取文档内容的 JSON 格式。
+
+Thought: 我获取到文档内容，现在我需要修改所有标题段落的字体和大小。
+
+Action: modify_paragraph_style()
+
+Action Input: {"paragraph_index_list": [1, 3, 5], "font_name": "Times New Roman", "font_size": 16}
+
+Observation: 所有标题段落（索引为 [1, 3, 5]）已成功修改为“Times New Roman”字体，字号为 16。
+
+Thought: 所有标题已修改，现在我需要保存修改后的文档。
+
+Action: save_document()
+
+Action Input: "existing_document_with_updated_titles.docx"
+
+Observation: 文档已保存为 existing_document_with_updated_titles.docx。
+
+Final Answer: 我已成功将 existing_document.docx 中的所有标题段落的字体修改为“Times New Roman”，字号为 16，并保存为 existing_document_with_updated_titles.docx。
 
 任务指令：{input}
 """
