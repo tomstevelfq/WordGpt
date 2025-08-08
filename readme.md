@@ -1,6 +1,7 @@
 ## wordgpt
 大模型工具调用
 word自动化
+![alt text](image.png)
 
 ### 问题1：
 大模型要能随时浏览到word的内容，要将python-docx库读取到的word转成一种大模型可以理解的格式
@@ -173,4 +174,48 @@ def modify_paragraph(doc, paragraph_index, new_text):
 4. **文档格式修改 API**：用于修改文档的标题、段落和表格的格式。
 5. **选择器、执行器和验证器**：用于选择要操作的文档元素，执行相应的修改操作，并验证操作是否成功。
 
-通过这些 API，您可以灵活地生成、修改和验证 Word 文档。
+
+
+### Word 文档操作与任务验证自动化
+自动化地操作 Word 文档，包括创建、保存、修改段落样式、设置标题等，同时通过大模型（如 ChatOpenAI）来判断任务是否完成。项目的核心是通过封装 Word 操作的 API，结合 React 的任务执行与动态选择任务示例，来自动化执行文档任务并验证其结果。
+
+### 功能概述
+封装的 Word 操作 API：本项目提供了一系列封装的 API 来操作 Word 程序。主要操作包括打开 Word 程序、创建新文档、保存文档、关闭文档、添加段落并设置格式、设置标题、退出程序等。
+
+### 主要 API：
+
+start_word(input_json)：启动 Word 程序。
+
+create_document(input_json)：创建一个新文档。
+
+save_document(input_json)：保存文档到指定路径。
+
+close_document(input_json)：关闭文档。
+
+quit_word(input_json)：退出 Word 程序。
+
+add_paragraph(input_json)：在文档中添加段落，并设置其字体、字号、对齐方式等格式。
+
+React 模型接口工具：为了能根据用户任务动态执行和选择最相关的任务，我们使用 Tool 封装上述 API 作为 React 的工具函数，结合大模型动态选择最相关的任务示例。
+
+### 工具函数示例：
+
+modify_paragraph_style：修改多个段落的样式。
+
+modify_paragraph：修改指定段落的文本内容。
+
+get_word_content：获取文档内容的 JSON 格式，用于任务完成的检查。
+
+动态示例筛选：当用户提交任务指令时，系统会根据任务指令从事先积累的任务示例中选择最相关的三个任务，并动态将它们嵌入到提示词（react_prompt）中，作为参考示例来帮助大模型理解任务要求。
+
+任务验证与反馈：执行完 Word 操作后，通过获取 Word 文档的 JSON 格式内容，调用大模型判断是否完成了任务。如果任务完成，返回 yes，否则返回 no，并继续执行任务直到任务完成。
+
+### 项目结构
+Word 操作 API：提供了 Word 操作的基本封装，供 React 系统调用。
+
+React 提示词：设计了动态任务选择和任务完成验证的提示词模板。
+
+任务选择与验证：在任务执行过程中，结合 LLMChain 来根据输入任务指令选择相关任务示例，并用大模型判断任务完成情况。
+
+
+
