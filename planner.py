@@ -3,9 +3,279 @@ from langchain.prompts import PromptTemplate
 from langchain.chains.llm import LLMChain
 from langchain.llms import BaseLLM
 import json
+from langchain.agents import initialize_agent, Tool, AgentType
+from word_api import *
 
-planner_prompt="""
-您将收到一个任务指令。您的任务是将这个大任务分解为一系列可以通过 API 调用逐步解决的小任务。每次规划时，您只需规划一个步骤，执行该步骤后根据执行结果继续规划后续步骤。
+# planner_prompt="""
+# 您将收到一个任务指令。您的任务是将这个大任务分解为一系列可以通过 API 调用逐步解决的小任务。每次规划时，您只需规划一个步骤，执行该步骤后根据执行结果继续规划后续步骤。
+
+# 可用的 API 调用包括：
+
+# 1. 启动 Word 程序：`start_word()`
+# 2. 打开现有文档：`open_document(file_path)`
+# 3. 创建新文档：`create_document()`
+# 4. 保存文档：`save_document(file_path)`
+# 5. 关闭文档：`close_document()`
+# 6. 退出 Word 程序：`quit_word()`
+# 7. 添加段落并设置格式：`add_paragraph(text, style="正文", font_name="宋体", font_size=12, bold=False, italic=False, alignment=1)`
+# 8. 设置文档标题：`set_title(title_text, style="标题 1", font_name="宋体", font_size=18)`
+# 9. 设置段落对齐方式：`set_paragraph_alignment(paragraph_index, alignment)`
+# 10. 设置段落字体和字号：`set_paragraph_font(paragraph_index, font_name, font_size)`
+# 11. 设置段落加粗：`set_paragraph_bold(paragraph_index, bold)`
+# 12. 设置段落斜体：`set_paragraph_italic(paragraph_index, italic)`
+# 13. 修改段落样式：`modify_paragraph_style(paragraph_index_list, style="正文", font_name="宋体", font_size=12)`
+# 14. 修改段落文本：`modify_paragraph(paragraph_index, new_text)`
+# 15. 获取 Word 文档内容：`get_word_content()`
+
+# 您需要根据任务指令规划每个执行步骤，并通过 API 调用来实现。每个步骤的规划应包括：
+
+# - **Plan step**: 一个详细的任务步骤。
+# - **API response**: 对应 API 调用的响应结果。
+# - **计划的每个步骤**：每次只规划一个步骤，确保每个步骤都可以用单个 API 调用来解决。
+
+# ### 示例：
+
+# (1)任务指令：为用户创建一个名为“项目计划”的文档，并在文档中添加标题“项目概述”，然后保存为 `project_plan.docx`。
+
+# **规划步骤 1**：
+# Plan step 1: 创建一个新的空文档。
+# API response: 新文档已创建。
+
+# **规划步骤 2**：
+# Plan step 2: 设置文档标题为“项目概述”，字体为宋体，字号为 18。
+# API response: 文档标题已设置为“项目概述”，字体为宋体，字号为 18。
+
+# **规划步骤 3**：
+# Plan step 3: 保存文档为 `project_plan.docx`。
+# API response: 文档已保存为 `project_plan.docx`。
+
+# **最终答案**：
+# 我已成功创建一个名为“项目计划”的文档，标题为“项目概述”，并将其保存为 `project_plan.docx`。
+
+# ---
+
+
+# (2)任务指令：修改已有文档，将文档中的所有标题更改为斜体。
+
+# 规划步骤 1：
+# Plan step 1: 打开现有文档 existing_document.docx。
+# API response: 成功打开 existing_document.docx 文档。
+
+# 规划步骤 2：
+# Plan step 2: 获取文档内容的 JSON 格式，分析 JSON 并获取所有标题段落的索引。
+# API response: ```[
+#     {{
+#         "type": "paragraph",
+#         "text": "项目概述",
+#         "font": "宋体",
+#         "size": 18.0,
+#         "bold": 1,
+#         "italic": 0,
+#         "underline": 0,
+#         "alignment": 1,
+#         "line_spacing": 1.5,
+#         "is_title": true
+#     }},
+#     {{
+#         "type": "paragraph",
+#         "text": "工作安排",
+#         "font": "宋体",
+#         "size": 16.0,
+#         "bold": 0,
+#         "italic": 0,
+#         "underline": 0,
+#         "alignment": 0,
+#         "line_spacing": 1.15,
+#         "is_title": true
+#     }},
+#     {{
+#         "type": "paragraph",
+#         "text": "项目目标",
+#         "font": "宋体",
+#         "size": 16.0,
+#         "bold": 0,
+#         "italic": 0,
+#         "underline": 0,
+#         "alignment": 0,
+#         "line_spacing": 1.15,
+#         "is_title": false
+#     }}
+# ]```
+
+# 规划步骤 3：
+# Plan step 3: 获取到文档内容的 JSON 格式，标题段落的索引为 [1, 3, 5, 7],对每个标题段落的进行操作，将它们的样式设置为斜体。
+# API response: 所有标题段落（索引为 [1, 3, 5, 7]）已成功设置为斜体。
+
+# 规划步骤 4：
+# Plan step 4: 保存修改后的文档为 existing_document_updated.docx。
+# API response: 文档已保存为 existing_document_updated.docx。
+
+# 最终答案：
+# 我已成功修改 existing_document.docx 中的所有标题（索引为 [1, 3, 5, 7]），将它们设置为斜体，并保存为 existing_document_updated.docx。
+
+# **注意事项**：
+# 1. 每次规划一个步骤，不要跳过,进一步规划要等api返回才能决定。
+# 2. 每个计划步骤应该是一个独立的 API 调用，确保任务可以按顺序执行。
+# 3. 每次执行步骤后，根据 API 响应进行下一步规划，确保任务逐步完成。
+# 4. 在规划步骤中，避免使用模糊的描述，要明确每个步骤的执行内容。
+
+# 任务指令：{input}  
+# Plan step 1: {agent_scratchpad}
+# """
+
+tools = [
+    Tool(
+        name="start_word",
+        func=start_word,
+        description="""启动 Word 程序。
+        输入：无。
+        返回：启动成功或失败的消息。
+        参数格式：无。"""
+    ),
+    Tool(
+        name="open_document",
+        func=open_document,
+        description="""打开现有的 Word 文档。
+        输入：
+            - file_path (str): 需要打开的文档文件路径。
+        参数格式：JSON 字符串，示例：{{"file_path": "document_example.docx"}}。
+        返回：文档是否成功打开的信息。"""
+    ),
+    Tool(
+        name="create_document",
+        func=create_document,
+        description="""创建一个新的空文档。
+        输入：无。
+        参数格式：无。
+        返回：创建文档成功的消息。"""
+    ),
+    Tool(
+        name="save_document",
+        func=save_document,
+        description="""保存当前文档到指定路径。
+        输入：
+            - file_path (str): 保存文档的文件路径。
+        参数格式：JSON 字符串，示例：{{"file_path": "path_to_save/document.docx"}}。
+        返回：文件保存成功的路径消息。"""
+    ),
+    Tool(
+        name="close_document",
+        func=close_document,
+        description="""关闭当前文档。
+        输入：无。
+        参数格式：无。
+        返回：关闭文档成功或失败的消息。"""
+    ),
+    Tool(
+        name="quit_word",
+        func=quit_word,
+        description="""退出 Word 程序。
+        输入：无。
+        参数格式：无。
+        返回：退出成功或失败的消息。"""
+    ),
+    Tool(
+        name="add_paragraph",
+        func=add_paragraph,
+        description="""添加段落并设置格式。
+        输入：
+            - text (str): 段落文本内容。
+            - style (str, optional): 段落样式，默认为 "正文"。
+            - font_name (str, optional): 字体名称，默认为 "宋体"。
+            - font_size (int, optional): 字号，默认为 12。
+            - bold (bool, optional): 是否加粗，默认为 False。
+            - italic (bool, optional): 是否斜体，默认为 False。
+            - alignment (int, optional): 对齐方式（0-左对齐，1-居中，2-右对齐），默认为 1。
+        参数格式：JSON 字符串，示例：{{"text": "Hello World", "style": "正文", "font_name": "宋体", "font_size": 12, "bold": false, "italic": false, "alignment": 1}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="set_title",
+        func=set_title,
+        description="""设置文档标题。
+        输入：
+            - title_text (str): 标题文本。
+            - style (str, optional): 标题样式，默认为 "标题 1"。
+            - font_name (str, optional): 字体名称，默认为 "宋体"。
+            - font_size (int, optional): 字号，默认为 18。
+        参数格式：JSON 字符串，示例：{{"title_text": "Document Title", "style": "标题 1", "font_name": "宋体", "font_size": 18}}。
+        返回：设置的标题文本。"""
+    ),
+    Tool(
+        name="set_paragraph_alignment",
+        func=set_paragraph_alignment,
+        description="""设置多个段落的对齐方式。
+        输入：
+            - paragraph_index_list (list): 需要设置对齐方式的段落索引列表。
+            - alignment (int): 对齐方式（0-左对齐，1-居中，2-右对齐）。
+        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 2, 3], "alignment": 1}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="set_paragraph_font",
+        func=set_paragraph_font,
+        description="""设置多个段落的字体和字号。
+        输入：
+            - paragraph_index_list (list): 需要设置字体的段落索引列表。
+            - font_name (str): 字体名称。
+            - font_size (int): 字号。
+        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 2], "font_name": "宋体", "font_size": 12}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="set_paragraph_bold",
+        func=set_paragraph_bold,
+        description="""设置多个段落的加粗。
+        输入：
+            - paragraph_index_list (list): 需要设置加粗的段落索引列表。
+            - bold (bool): 是否加粗（True/False）。
+        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 3], "bold": true}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="set_paragraph_italic",
+        func=set_paragraph_italic,
+        description="""设置多个段落的斜体。
+        输入：
+            - paragraph_index_list (list): 需要设置斜体的段落索引列表。
+            - italic (bool): 是否斜体（True/False）。
+        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 3, 5], "italic": true}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="modify_paragraph_style",
+        func=modify_paragraph_style,
+        description="""修改多个段落的样式。
+        输入：
+            - paragraph_index_list (list): 需要修改样式的段落索引列表。
+            - style (str, optional): 新的段落样式，默认为 "正文"。
+            - font_name (str, optional): 字体名称，默认为 "宋体"。
+            - font_size (int, optional): 字号，默认为 12。
+        参数格式：JSON 字符串，示例：{{"paragraph_index_list": [1, 2], "style": "正文", "font_name": "宋体", "font_size": 12}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="modify_paragraph",
+        func=modify_paragraph,
+        description="""修改段落文本。
+        输入：
+            - paragraph_index (int): 需要修改文本的段落索引。
+            - new_text (str): 新的段落文本。
+        参数格式：JSON 字符串，示例：{{"paragraph_index": 1, "new_text": "Updated text"}}。
+        返回：无返回值。"""
+    ),
+    Tool(
+        name="get_word_content",
+        func=get_word_content,
+        description="""获取 Word 文档内容的 JSON 格式。
+        输入：无。
+        返回：文档内容的 JSON 格式。"""
+    )
+]
+
+react_prompt="""
+你是一个智能助手，任务是根据给定的任务指令分解为一系列可以通过 API 调用逐步解决的小任务，并根据执行结果决定下一步的行动。
+尽量每一步的分解都是通过调用单个api的功能解决的。
 
 可用的 API 调用包括：
 
@@ -25,147 +295,126 @@ planner_prompt="""
 14. 修改段落文本：`modify_paragraph(paragraph_index, new_text)`
 15. 获取 Word 文档内容：`get_word_content()`
 
-您需要根据任务指令规划每个执行步骤，并通过 API 调用来实现。每个步骤的规划应包括：
+示例：
+任务指令：为用户创建一个名为“项目计划”的文档，并在文档中添加标题“项目概述”，然后保存为 `project_plan.docx`。
 
-- **Plan step**: 一个详细的任务步骤。
-- **API response**: 对应 API 调用的响应结果。
-- **计划的每个步骤**：每次只规划一个步骤，确保每个步骤都可以用单个 API 调用来解决。
+Thought: 我需要逐步执行任务：打开word程序，创建文档、设置标题和保存。
+Action: create_document()
+Action Input: success
+Observation: 成功创建了一个新的文档。
 
-### 示例：
+Thought: 文档已创建，现在我需要设置文档标题。
+Action: set_title()
+Action Input: "项目概述"
+Observation: 文档标题已设置为“项目概述”，字体为宋体，字号为 18。
 
-(1)任务指令：为用户创建一个名为“项目计划”的文档，并在文档中添加标题“项目概述”，然后保存为 `project_plan.docx`。
+Thought: 标题已设置，现在我需要保存文档。
+Action: save_document()
+Action Input: project_plan.docx save success
+Observation: 文档已保存为 `project_plan.docx`。
 
-**规划步骤 1**：
-Plan step 1: 创建一个新的空文档。
-API response: 新文档已创建。
-
-**规划步骤 2**：
-Plan step 2: 设置文档标题为“项目概述”，字体为宋体，字号为 18。
-API response: 文档标题已设置为“项目概述”，字体为宋体，字号为 18。
-
-**规划步骤 3**：
-Plan step 3: 保存文档为 `project_plan.docx`。
-API response: 文档已保存为 `project_plan.docx`。
-
-**最终答案**：
-我已成功创建一个名为“项目计划”的文档，标题为“项目概述”，并将其保存为 `project_plan.docx`。
+Final Answer: 我已成功创建一个名为“项目计划”的文档，标题为“项目概述”，并将其保存为 `project_plan.docx`。
 
 ---
 
+任务指令：修改已有文档，将文档中的所有标题更改为斜体。
 
-(2)任务指令：修改已有文档，将文档中的所有标题更改为斜体。
+Thought: 我需要逐步执行任务：打开文档、获取内容、修改标题样式和保存文档。
+Action: open_document()
+Action Input: "existing_document.docx"
+Observation: 成功打开 existing_document.docx 文档。
 
-规划步骤 1：
-Plan step 1: 打开现有文档 existing_document.docx。
-API response: 成功打开 existing_document.docx 文档。
+Thought: 文档已打开，现在我需要获取文档内容。
+Action: get_word_content()
+Action Input: 无
+Observation: 成功获取文档内容的 JSON 格式。
 
-规划步骤 2：
-Plan step 2: 获取文档内容的 JSON 格式，分析 JSON 并获取所有标题段落的索引。
-API response: ```[
-    {{
-        "type": "paragraph",
-        "text": "项目概述",
-        "font": "宋体",
-        "size": 18.0,
-        "bold": 1,
-        "italic": 0,
-        "underline": 0,
-        "alignment": 1,
-        "line_spacing": 1.5,
-        "is_title": true
-    }},
-    {{
-        "type": "paragraph",
-        "text": "工作安排",
-        "font": "宋体",
-        "size": 16.0,
-        "bold": 0,
-        "italic": 0,
-        "underline": 0,
-        "alignment": 0,
-        "line_spacing": 1.15,
-        "is_title": true
-    }},
-    {{
-        "type": "paragraph",
-        "text": "项目目标",
-        "font": "宋体",
-        "size": 16.0,
-        "bold": 0,
-        "italic": 0,
-        "underline": 0,
-        "alignment": 0,
-        "line_spacing": 1.15,
-        "is_title": false
-    }}
-]```
+Thought: 我获取到文档内容，现在我需要操作所有标题段落的样式。
+Action: modify_paragraph_style()
+Action Input: "所有标题段落设置为斜体"
+Observation: 所有标题段落（索引为 [1, 3, 5, 7]）已成功设置为斜体。
 
-规划步骤 3：
-Plan step 3: 获取到文档内容的 JSON 格式，标题段落的索引为 [1, 3, 5, 7],对每个标题段落的进行操作，将它们的样式设置为斜体。
-API response: 所有标题段落（索引为 [1, 3, 5, 7]）已成功设置为斜体。
+Thought: 所有标题已修改，现在我需要保存修改后的文档。
+Action: save_document()
+Action Input: existing_document_updated.docx save success
+Observation: 文档已保存为 existing_document_updated.docx。
 
-规划步骤 4：
-Plan step 4: 保存修改后的文档为 existing_document_updated.docx。
-API response: 文档已保存为 existing_document_updated.docx。
+Final Answer: 我已成功修改 existing_document.docx 中的所有标题，将它们设置为斜体，并保存为 existing_document_updated.docx。
 
-最终答案：
-我已成功修改 existing_document.docx 中的所有标题（索引为 [1, 3, 5, 7]），将它们设置为斜体，并保存为 existing_document_updated.docx。
+---
 
-**注意事项**：
-1. 每次规划一个步骤，不要跳过,进一步规划要等api返回才能决定。
-2. 每个计划步骤应该是一个独立的 API 调用，确保任务可以按顺序执行。
-3. 每次执行步骤后，根据 API 响应进行下一步规划，确保任务逐步完成。
-4. 在规划步骤中，避免使用模糊的描述，要明确每个步骤的执行内容。
-
-任务指令：{input}  
-Plan step 1: {agent_scratchpad}
+任务指令：{input}
 """
 
-history=[]
-# 任务规划器函数：根据任务指令和历史记录生成下一个任务步骤
-def construct_scratchpad():
-    """
-    根据历史记录构造 scratchpad
-    :param history: 任务历史记录，每个记录包括执行步骤和API响应
-    :return: 拼接后的 scratchpad 字符串
-    """
-    if len(history) == 0:
-        return ""
-    scratchpad = ""
-    for i, (plan, execution_res) in enumerate(history):
-        scratchpad += f"Plan step {i + 1}: " + plan + "\n"
-        scratchpad += "API response: " + execution_res + "\n"
-    return scratchpad
+# history=[]
+# # 任务规划器函数：根据任务指令和历史记录生成下一个任务步骤
+# def construct_scratchpad():
+#     """
+#     根据历史记录构造 scratchpad
+#     :param history: 任务历史记录，每个记录包括执行步骤和API响应
+#     :return: 拼接后的 scratchpad 字符串
+#     """
+#     if len(history) == 0:
+#         return ""
+#     scratchpad = ""
+#     for i, (plan, execution_res) in enumerate(history):
+#         scratchpad += f"Plan step {i + 1}: " + plan + "\n"
+#         scratchpad += "API response: " + execution_res + "\n"
+#     return scratchpad
 
 
-def generate_next_step(task_instruction):
-    """
-    根据任务指令和历史记录推理下一步的任务
-    :param task_instruction: 当前任务指令
-    :param history: 历史任务记录
-    :param scenario: 当前任务的场景（例如 tmdb, spotify 等）
-    :param llm: 使用的 LLM 模型
-    :return: 新的任务步骤
-    """
-    # 根据历史记录构造 scratchpad
-    scratchpad = construct_scratchpad()
+# def generate_next_step(task_instruction):
+#     """
+#     根据任务指令和历史记录推理下一步的任务
+#     :param task_instruction: 当前任务指令
+#     :param history: 历史任务记录
+#     :param scenario: 当前任务的场景（例如 tmdb, spotify 等）
+#     :param llm: 使用的 LLM 模型
+#     :return: 新的任务步骤
+#     """
+#     # 根据历史记录构造 scratchpad
+#     scratchpad = construct_scratchpad()
     
-    # 规划提示模板
-    plan_prompt = PromptTemplate(
-        template=planner_prompt,
-        partial_variables={
-            "agent_scratchpad": scratchpad,
-        },
-        input_variables=["input"]
-    )
+#     # 规划提示模板
+#     plan_prompt = PromptTemplate(
+#         template=planner_prompt,
+#         partial_variables={
+#             "agent_scratchpad": scratchpad,
+#         },
+#         input_variables=["input"]
+#     )
     
-    # 使用 LLMChain 执行规划
-    planner_chain = LLMChain(llm=llm, prompt=plan_prompt)
-    planner_chain_output = planner_chain.run(input=task_instruction)
+#     # 使用 LLMChain 执行规划
+#     planner_chain = LLMChain(llm=llm, prompt=plan_prompt)
+#     planner_chain_output = planner_chain.run(input=task_instruction)
 
-    # 处理返回的规划结果
-    planner_chain_output = planner_chain_output.strip()
+#     # 处理返回的规划结果
+#     planner_chain_output = planner_chain_output.strip()
     
-    # 将新的步骤添加到历史记录中
-    history.append((planner_chain_output,''))
-    return planner_chain_output
+#     # 将新的步骤添加到历史记录中
+#     history.append((planner_chain_output,''))
+#     return planner_chain_output
+
+# 自定义 Prompt
+custom_prompt = PromptTemplate(
+    template=react_prompt,
+    input_variables=["input"]
+)
+
+# 初始化 Agent
+agent = initialize_agent(
+    tools=tools,
+    agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+    llm=llm,
+    prompt=custom_prompt,
+    verbose=True
+)
+
+def call_agent(question="将document_example.docx文档标题字体都修改为四号,微软雅黑"):
+    global multi_call_list
+    multi_call_list = []
+    agent.run(question)
+    return multi_call_list
+
+# 测试调用
+call_agent()
